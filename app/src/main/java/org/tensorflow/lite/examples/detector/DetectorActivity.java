@@ -40,6 +40,8 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -110,6 +112,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   // Face detector
   private FaceDetector faceDetector;
 
+  // Bluetooth HC-05
+  private BluetoothHelper bluetoothHelper;
+
   // here the preview image is drawn in portrait way
   private Bitmap portraitBmp = null;
   // here the face is cropped and drawn
@@ -134,6 +139,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
 
+    // Connect to HC-05 Bluetooth module
+    bluetoothHelper = new BluetoothHelper();
+    new Thread(() -> bluetoothHelper.connect()).start();
 
   }
 
@@ -453,9 +461,13 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             label = result.getTitle();
             if (result.getId().equals("0")) {
               color = Color.GREEN;
+              // Mask detected - send "1" to HC-05
+              if (bluetoothHelper != null) bluetoothHelper.send("1");
             }
             else {
               color = Color.RED;
+              // No mask - send "0" to HC-05
+              if (bluetoothHelper != null) bluetoothHelper.send("0");
             }
           }
 
@@ -499,5 +511,12 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   }
 
+  @Override
+  public synchronized void onDestroy() {
+    if (bluetoothHelper != null) {
+      bluetoothHelper.close();
+    }
+    super.onDestroy();
+  }
 
 }
