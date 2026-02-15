@@ -126,7 +126,9 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     d.inputSize = inputSize;
 
     try {
-      d.tfLite = new Interpreter(loadModelFile(assetManager, modelFilename));
+      Interpreter.Options options = new Interpreter.Options();
+      options.setNumThreads(NUM_THREADS);
+      d.tfLite = new Interpreter(loadModelFile(assetManager, modelFilename), options);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -142,8 +144,6 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     d.imgData = ByteBuffer.allocateDirect(1 * d.inputSize * d.inputSize * 3 * numBytesPerChannel);
     d.imgData.order(ByteOrder.nativeOrder());
     d.intValues = new int[d.inputSize * d.inputSize];
-
-    d.tfLite.setNumThreads(NUM_THREADS);
     d.outputLocations = new float[1][NUM_DETECTIONS][4];
     d.outputClasses = new float[1][NUM_DETECTIONS];
     d.outputScores = new float[1][NUM_DETECTIONS];
@@ -275,11 +275,11 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   public void close() {}
 
   public void setNumThreads(int num_threads) {
-    if (tfLite != null) tfLite.setNumThreads(num_threads);
+    // Thread count is now set via Interpreter.Options at creation time
   }
 
   @Override
   public void setUseNNAPI(boolean isChecked) {
-    if (tfLite != null) tfLite.setUseNNAPI(isChecked);
+    // NNAPI is now configured via Interpreter.Options at creation time
   }
 }
